@@ -37,6 +37,7 @@ export default function FleetServiceData() {
     }
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const navigate = useNavigate();
 
   const handleFileUpload = (fileType) => (event) => {
@@ -59,23 +60,54 @@ export default function FleetServiceData() {
       try {
         if (fileExtension === '.csv') {
           const text = e.target.result;
-          const lines = text.split(/\r\n|\n/).filter(line => line.trim());
-          const rows = lines.map(line => {
-            return line.split(',').map(cell => {
-              const value = cell.trim();
-              if (value.match(/^\d{2}:\d{2}:\d{2}$/)) {
-                return value;
-              }
-              if (!isNaN(value) && value !== '') {
-                return Number(value).toFixed(2);
-              }
-              return value;
-            });
-          });
+          console.log('File size:', text.length);
 
-          const headers = rows[0];
-          const data = rows.slice(1).filter(row => row.length === headers.length);
-          
+          // 分割行，保留所有非空行
+          const rows = text.split(/[\r\n]+/).filter(row => row.trim());
+          console.log('Total rows found:', rows.length);
+
+          // 解析标题行
+          const headers = rows[0].split(',').map(header => header.trim());
+          console.log('Headers:', headers);
+          const expectedCols = headers.length;
+
+          // 解析数据行
+          const data = [];
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row.trim()) continue;
+
+            // 使用正则表达式处理带引号的字段
+            let values = row.match(/("([^"]*)"|[^,]+)/g) || [];
+            
+            // 清理和转换值
+            values = values.map(value => {
+              // 移除引号和空白
+              let val = value.trim().replace(/^"|"$/g, '').trim();
+              
+              // 处理时间格式
+              if (val.match(/^\d{2}:\d{2}:\d{2}$/)) {
+                return val;
+              }
+              // 处理数字
+              if (!isNaN(val) && val !== '') {
+                return Number(parseFloat(val).toFixed(2));
+              }
+              return val;
+            });
+
+            // 补齐缺失的列
+            while (values.length < expectedCols) {
+              values.push('');
+            }
+
+            data.push(values);
+          }
+
+          console.log('Parsed data rows:', data.length);
+          console.log('Sample first row:', data[0]);
+          console.log('Sample last row:', data[data.length - 1]);
+
           setFileData(prev => ({
             ...prev,
             [fileType]: { headers, data }
@@ -86,19 +118,21 @@ export default function FleetServiceData() {
           return;
         }
       } catch (err) {
+        console.error('File processing error:', err);
+        console.error('Error details:', {
+          message: err.message,
+          stack: err.stack
+        });
         setError('Error processing file: ' + err.message);
       }
     };
 
     reader.onerror = () => {
+      console.error('File reading error');
       setError('Error reading file');
     };
 
-    if (fileExtension === '.csv') {
-      reader.readAsText(uploadedFile);
-    } else {
-      reader.readAsArrayBuffer(uploadedFile);
-    }
+    reader.readAsText(uploadedFile);
   };
 
   const handleProcessFiles = async () => {
@@ -122,18 +156,22 @@ export default function FleetServiceData() {
   };
 
   const handleGenerateReport = async () => {
+    setIsGeneratingReport(true);
     try {
       const formData = new FormData();
       formData.append('operational', files.operational);
       formData.append('base', files.base);
       
-      // 这里可以添加实际的报告生成逻辑
+      // 模拟报告生成时间
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // 导航到报告页面
       navigate('/fleet-service/report');
       
     } catch (err) {
       setError('Error generating report: ' + err.message);
+    } finally {
+      setIsGeneratingReport(false);
     }
   };
 
@@ -170,46 +208,71 @@ export default function FleetServiceData() {
     return file && (
       <div className="mt-4">
         <h3 className="text-lg font-medium mb-2">{title} Preview</h3>
-        <div className="overflow-auto border border-gray-200 rounded-lg" 
-             style={{ maxHeight: '400px', overflowY: 'auto' }}>
+        <div className="overflow-x-auto border border-gray-200 rounded-lg">
           {data && (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr className="bg-gray-50">
-                  {data.headers.map((header, index) => (
-                    <th
-                      key={index}
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 border-r last:border-r-0 sticky top-0 bg-gray-50 z-10"
-                      style={{ minWidth: header === 'Block Id' ? '120px' : 'auto' }}
-                    >
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {data.data.map((row, rowIndex) => (
-                  <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    {row.map((cell, cellIndex) => (
-                      <td
-                        key={cellIndex}
-                        className="px-4 py-3 text-sm text-gray-900 border-r last:border-r-0"
+            <>
+              <table className="w-full divide-y divide-gray-200">
+                <thead>
+                  <tr className="bg-gray-50">
+                    {data.headers.map((header, index) => (
+                      <th
+                        key={index}
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 border-r last:border-r-0 bg-gray-50"
                         style={{
-                          textAlign: cellIndex === 0 ? 'left' : 'right',
-                          fontFamily: 'monospace'
+                          minWidth: (() => {
+                            switch (header) {
+                              case 'Route Id (GTFS/Remix)':
+                              case 'Route Name (KCM)':
+                              case 'Block Id':
+                              case 'Vehicle Size':
+                              case 'Depot':
+                                return '120px';
+                              case 'Departure Time':
+                              case 'Arrival Time':
+                                return '100px';
+                              case 'Distance (mi)':
+                              case 'Efficiency (kWh/mi)':
+                              case 'HVAC/ Aux (kWh)':
+                              case 'Total Energy (kWh)':
+                              case 'Traction Energy (kWh)':
+                                return '140px';
+                              default:
+                                return '120px';
+                            }
+                          })()
                         }}
                       >
-                        {cell || '-'}
-                      </td>
+                        {header}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {data.data.slice(0, 10).map((row, rowIndex) => (
+                    <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      {row.map((cell, cellIndex) => (
+                        <td
+                          key={cellIndex}
+                          className="px-4 py-2 text-sm text-gray-900 border-r last:border-r-0 whitespace-nowrap"
+                          style={{
+                            textAlign: typeof cell === 'number' ? 'right' : 'left',
+                            fontFamily: typeof cell === 'number' ? 'monospace' : 'inherit'
+                          }}
+                        >
+                          {cell || '-'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="p-4 border-t border-gray-200 bg-gray-50">
+                <div className="text-sm text-gray-600">
+                  Showing first 10 rows of {data.data.length} rows
+                </div>
+              </div>
+            </>
           )}
-        </div>
-        <div className="mt-2 text-sm text-gray-500">
-          Total {data?.data.length || 0} rows
         </div>
       </div>
     );
@@ -339,17 +402,19 @@ export default function FleetServiceData() {
   );
 
   // 加载动画组件
-  const LoadingSpinner = () => (
+  const LoadingSpinner = ({ message }) => (
     <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50">
       <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-500 mb-4"></div>
-        <p className="text-slate-600">Processing files...</p>
+        <p className="text-slate-600">{message}</p>
       </div>
     </div>
   );
 
   return (
     <Layout>
+      {isProcessing && <LoadingSpinner message="Processing files..." />}
+      {isGeneratingReport && <LoadingSpinner message="Generating report..." />}
       <div className="max-w-5xl mx-auto w-full">
         {!showPreview ? (
           <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
