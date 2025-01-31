@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .all-\[unset\] {
+    all: unset;
+  }
+}
+
+:root {
+  --button-shape-button-corner-radius: var(--global-corner-radius-medium);
+  --corner-radius-medium: 4px;
+  --global-colors-alpha-black-0: rgba(0, 0, 0, 0);
+  --global-colors-alpha-white-0: rgba(255, 255, 255, 0);
+  --global-colors-neutral-grey-14: rgba(36, 36, 36, 1);
+  --global-colors-neutral-grey-82: rgba(209, 209, 209, 1);
+  --global-colors-neutral-white: rgba(255, 255, 255, 1);
+  --global-corner-radius-circular: 9999px;
+  --global-corner-radius-medium: 4px;
+  --global-corner-radius-none: 0px;
+  --spacing-horizontal-m: 12px;
+  --spacing-horizontal-snudge: 6px;
+  --spacing-horizontal-XS: 4px;
+  --spacing-vertical-snudge: 6px;
+  --theme-neutral-background-transparent-rest: var(
+    --global-colors-alpha-white-0
+  );
+  --theme-neutral-foreground-1-rest: var(--global-colors-neutral-grey-14);
+  --theme-neutral-stroke-1-rest: var(--global-colors-neutral-grey-82);
+  --wf-base200: rgba(237, 240, 247, 1);
+  --wf-base300: rgba(226, 231, 240, 1);
+  --wf-base600: rgba(113, 125, 150, 1);
+  --wf-base800: rgba(45, 54, 72, 1);
+  --wf-basewhite: rgba(255, 255, 255, 1);
+  --WF-buttons-button-small-font-family: "Inter", Helvetica;
+  --WF-buttons-button-small-font-size: 14px;
+  --WF-buttons-button-small-font-style: normal;
+  --WF-buttons-button-small-font-weight: 700;
+  --WF-buttons-button-small-letter-spacing: -0.14px;
+  --WF-buttons-button-small-line-height: 24px;
+}
+
+/*
+
+To enable a theme in your HTML, simply add one of the following data attributes to an HTML element, like so:
+
+<body data-theme-mode="light">
+    <!-- the rest of your content -->
+</body>
+
+You can apply the theme on any DOM node, not just the `body`
+
+*/
+
+[data-theme-mode="light"] {
+  --theme-neutral-background-transparent-rest: var(
+    --global-colors-alpha-white-0
+  );
+  --theme-neutral-foreground-1-rest: var(--global-colors-neutral-grey-14);
+}
+
+[data-theme-mode="dark"] {
+  --theme-neutral-background-transparent-rest: var(
+    --global-colors-alpha-black-0
+  );
+  --theme-neutral-foreground-1-rest: var(--global-colors-neutral-white);
+}
+
+[data-button-shape-mode="rounded-default"] {
+  --button-shape-button-corner-radius: var(--global-corner-radius-medium);
+}
+
+[data-button-shape-mode="circular"] {
+  --button-shape-button-corner-radius: var(--global-corner-radius-circular);
+}
+
+[data-button-shape-mode="square"] {
+  --button-shape-button-corner-radius: var(--global-corner-radius-none);
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+
+    --card: transparent;
+    --card-foreground: 222.2 47.4% 11.2%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 215 20.2% 65.1%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+
+    --card: transparent;
+    --card-foreground: 213 31% 91%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
+
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 216 34% 17%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
