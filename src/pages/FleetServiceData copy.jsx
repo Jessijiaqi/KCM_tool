@@ -167,6 +167,44 @@ export default function FleetServiceData() {
       
       // 导航到报告页面
       navigate('/fleet-service/report');
+
+      fetch('http://localhost:5050/upload', {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          // 'Content-Type': 'multipart/form-data',
+          // 'Accept': 'application/json',
+        },
+        // mode: 'no-cors',
+        method: 'POST',
+        body: formData
+      }).then((response) => {
+        var a = response.body.getReader();
+        a.read().then(({value }) => {
+              // console.log(new TextDecoder("utf-8").decode(value));
+              saveAsFile(new TextDecoder("utf-8").decode(value), 'filename');
+            }
+        );
+      });
+
+      function saveAsFile(text, filename) {
+        // Step 1: Create the blob object with the text you received
+        const type = 'application/text'; // modify or get it from response
+        const blob = new Blob([text], {type});
+
+        // Step 2: Create Blob Object URL for that blob
+        const url = URL.createObjectURL(blob);
+
+        // Step 3: Trigger downloading the object using that URL
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click(); // triggering it manually
+      }
+      // .then(response => response.json())
+      // .then(data =>  {
+      //   console.log(data);
+      // })
+      // .catch(error => console.error('Error:', error));
       
     } catch (err) {
       setError('Error generating report: ' + err.message);
