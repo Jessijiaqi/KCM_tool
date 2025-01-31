@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import Layout from '../components/Layout';
 
 export default function FleetServiceData() {
   const [files, setFiles] = useState({
@@ -11,6 +12,32 @@ export default function FleetServiceData() {
     base: null
   });
   const [error, setError] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState({
+    employeeName: 'Jane Doe',
+    date: '2024-12-10',
+    time: '11:11:00',
+    baseInfo: [
+      { baseName: 'South', busType: '60-foot', currentFleetNumber: 14, futureCapacity: 14 },
+      { baseName: 'South', busType: '40-foot', currentFleetNumber: 12, futureCapacity: 12 },
+      { baseName: 'North', busType: '60-foot', currentFleetNumber: 14, futureCapacity: 14 },
+      { baseName: 'North', busType: '40-foot', currentFleetNumber: 23, futureCapacity: 23 },
+      { baseName: 'Bellevue', busType: '60-foot', currentFleetNumber: 11, futureCapacity: 23 },
+      { baseName: 'Bellevue', busType: '40-foot', currentFleetNumber: 26, futureCapacity: 33 },
+      { baseName: 'East', busType: '60-foot', currentFleetNumber: 11, futureCapacity: 23 },
+      { baseName: 'East', busType: '40-foot', currentFleetNumber: 26, futureCapacity: 33 },
+    ],
+    busTypes: [
+      { type: '60-foot', manufacturer: 'New Flyer', efficiencyOptimal: '2.90 kWh/mile', efficiencyExtreme: '3.66 kWh/mile', batteryCapacity: '525 kWh' },
+      { type: '60-foot', manufacturer: 'Gillig', efficiencyOptimal: '2.90 kWh/mile', efficiencyExtreme: '3.66 kWh/mile', batteryCapacity: '686 kWh' },
+      { type: '40-foot', manufacturer: 'New Flyer', efficiencyOptimal: '2.08 kWh/mile', efficiencyExtreme: '2.80 kWh/mile', batteryCapacity: '525 kWh' },
+    ],
+    batterySettings: {
+      usage: 'Conservative (20%-85%)'
+    }
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
 
   const handleFileUpload = (fileType) => (event) => {
     const uploadedFile = event.target.files[0];
@@ -74,18 +101,36 @@ export default function FleetServiceData() {
     }
   };
 
-  const handleGenerateReport = async () => {
+  const handleProcessFiles = async () => {
     if (!files.operational || !files.base) {
       setError('Please upload both operational and base data files');
       return;
     }
 
+    setIsProcessing(true);
+    try {
+      // 模拟文件处理时间
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 这里可以添加实际的文件处理逻辑，更新 previewData
+      setShowPreview(true);
+    } catch (err) {
+      setError('Error processing files: ' + err.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleGenerateReport = async () => {
     try {
       const formData = new FormData();
       formData.append('operational', files.operational);
       formData.append('base', files.base);
       
-      alert('Report generated successfully!');
+      // 这里可以添加实际的报告生成逻辑
+      
+      // 导航到报告页面
+      navigate('/fleet-service/report');
       
     } catch (err) {
       setError('Error generating report: ' + err.message);
@@ -170,38 +215,143 @@ export default function FleetServiceData() {
     );
   };
 
-  return (
-    <div className="w-full min-h-screen flex bg-slate-200">
-      <aside className="w-64 bg-white border-r border-slate-200 shadow-lg fixed h-full">
-        <div className="h-14 flex items-center px-4 border-b border-slate-200">
-          <span className="font-medium text-lg">EcoRider</span>
-        </div>
-        <nav className="p-4 space-y-2">
-          <Link to="/" className="flex items-center px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-md">
-            Home
-          </Link>
-          <Link to="/fleet-service" className="flex items-center px-4 py-2 text-slate-600 bg-slate-100 rounded-md">
-            Fleet and Service Data
-          </Link>
-          <Link to="/simulation" className="flex items-center px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-md">
-            Simulation
-          </Link>
-          <Link to="/account" className="flex items-center px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-md">
-            Account
-          </Link>
-        </nav>
-      </aside>
-
-      <div className="flex-1 flex flex-col ml-64">
-        <header className="h-14 flex items-center justify-between px-6 bg-slate-500 shadow-md">
-          <div></div>
-          <div className="flex items-center gap-4 text-white">
-            <span className="text-sm font-medium">King County Metro</span>
-            <span className="text-sm">Jane Doe</span>
+  // 预览页面组件
+  const DataPreview = () => (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <div className="space-y-2">
+          <div className="flex gap-8">
+            <span className="text-gray-600">Employee Name: {previewData.employeeName}</span>
+            <span className="text-gray-600">Date: {previewData.date}</span>
+            <span className="text-gray-600">Time: {previewData.time}</span>
           </div>
-        </header>
+        </div>
+      </div>
 
-        <main className="flex-1 p-8 max-w-5xl mx-auto w-full">
+      {/* Base Info */}
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Base Info</h2>
+          <button className="flex items-center text-blue-600 hover:text-blue-700">
+            <span>Edit</span>
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        </div>
+        <div className="border rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Base Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bus Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Fleet Number</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Future Capacity</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {previewData.baseInfo.map((base, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 text-sm text-gray-900">{base.baseName}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{base.busType}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{base.currentFleetNumber}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{base.futureCapacity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Bus Type */}
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Bus Type</h2>
+          <button className="flex items-center text-blue-600 hover:text-blue-700">
+            <span>Edit</span>
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        </div>
+        <div className="border rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bus Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Manufacturer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Energy efficiency(optimal)</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Energy efficiency(extreme)</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Battery capacity</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {previewData.busTypes.map((bus, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 text-sm text-gray-900">{bus.type}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{bus.manufacturer}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{bus.efficiencyOptimal}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{bus.efficiencyExtreme}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{bus.batteryCapacity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Battery Settings */}
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Battery Settings</h2>
+          <button className="flex items-center text-blue-600 hover:text-blue-700">
+            <span>Edit</span>
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        </div>
+        <div className="border rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Battery Usage</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              <tr>
+                <td className="px-6 py-4 text-sm text-gray-900">{previewData.batterySettings.usage}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-base font-medium"
+          onClick={handleGenerateReport}
+        >
+          Generate Report
+        </button>
+      </div>
+    </div>
+  );
+
+  // 加载动画组件
+  const LoadingSpinner = () => (
+    <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50">
+      <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-500 mb-4"></div>
+        <p className="text-slate-600">Processing files...</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <Layout>
+      <div className="max-w-5xl mx-auto w-full">
+        {!showPreview ? (
           <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
             <h1 className="text-2xl font-bold mb-4">Fleet and Service Data</h1>
             <p className="text-slate-600 mb-6">
@@ -230,45 +380,49 @@ export default function FleetServiceData() {
                 <button
                   className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
                   disabled={!files.operational || !files.base || !!error}
-                  onClick={handleGenerateReport}
+                  onClick={handleProcessFiles}
                 >
-                  Generate Report
+                  Process Files
                 </button>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-200">
-              <h2 className="text-lg font-semibold">Fleet service report history</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Employee Name</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">File Name</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Date</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Time</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  <tr>
-                    <td className="px-6 py-4 text-sm text-slate-600">Jane Doe</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">Fleet and Service data 1</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">2024-12-10</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">11:11:00</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      <button className="text-blue-500 hover:text-blue-600">View</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+        ) : (
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <DataPreview />
           </div>
-        </main>
+        )}
+
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="px-6 py-4 border-b border-slate-200">
+            <h2 className="text-lg font-semibold">Fleet service report history</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Employee Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">File Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Date</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Time</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-slate-500">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                <tr>
+                  <td className="px-6 py-4 text-sm text-slate-600">Jane Doe</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">Fleet and Service data 1</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">2024-12-10</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">11:11:00</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">
+                    <button className="text-blue-500 hover:text-blue-600">View</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 } 
